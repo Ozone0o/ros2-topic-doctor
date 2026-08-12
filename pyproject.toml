@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ros2-topic-doctor"
+version = "0.1.0"
+description = "Diagnose ROS2 topic status: rate, QoS, freshness in one command."
+requires-python = ">=3.10"
+dependencies = [
+    "rclpy",
+    "rosidl_runtime_py",
+]
+
+[project.scripts]
+ros2-topic-doctor = "ros2_topic_doctor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 99
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
