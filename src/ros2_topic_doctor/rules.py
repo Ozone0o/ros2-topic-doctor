@@ -24,7 +24,7 @@ def evaluate(diag: TopicDiagnosis) -> TopicDiagnosis:
     OK:
         - 以上都不满足
     """
-    stale_timeout_ms = diag._stale_timeout_ms  # type: ignore[attr-defined]
+    stale_timeout_ms = diag.stale_timeout_ms
 
     # ERROR 检查
     if diag.pub_count == 0 and diag.sub_count == 0:
@@ -74,7 +74,7 @@ def diagnose(diag: TopicDiagnosis, *,
              stale_timeout_ms: float = 5000.0,
              expected_rate: float = 0.0) -> TopicDiagnosis:
     """便捷入口：设置参数后调用 evaluate。"""
-    diag._stale_timeout_ms = stale_timeout_ms  # type: ignore[attr-defined]
+    diag.stale_timeout_ms = stale_timeout_ms
     if expected_rate > 0:
         diag.expected_rate = expected_rate
     return evaluate(diag)

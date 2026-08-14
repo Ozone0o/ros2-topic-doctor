@@ -50,7 +50,7 @@ class TopicDiagnosis:
     qos_profile_missing: list[str] = field(default_factory=list)
     status: TopicStatus = TopicStatus.OK
     notes: list[str] = field(default_factory=list)
-    _stale_timeout_ms: float = 0.0
+    stale_timeout_ms: float = 0.0
 
     def to_dict(self) -> dict:
         d = asdict(self)

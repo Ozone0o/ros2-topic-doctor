@@ -48,22 +48,6 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _get_message_type(node: Node, topic_name: str) -> type | None:
-    """通过 topic 名称查询消息类型。"""
-    topic_types = node.get_topic_names_and_types()
-    for name, types in topic_types:
-        if name == topic_name and types:
-            type_string = types[0]
-            # 通过 rosidl_runtime_py 动态加载消息类型
-            try:
-                import rosidl_runtime_py
-                return rosidl_runtime_py.get_message(type_string)
-            except (ImportError, ValueError) as e:
-                logger.error(f"无法加载消息类型 {type_string}: {e}")
-                return None
-    return None
-
-
 def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -99,15 +83,18 @@ def _run(node: Node, args) -> None:
         return
 
     # 步骤 2: 获取消息类型
-    msg_type = _get_message_type(node, topic)
-    if msg_type is None:
+    msg_type_str = _get_type_string(node, topic)
+    try:
+        import rosidl_runtime_py
+        msg_type = rosidl_runtime_py.get_message(msg_type_str)
+    except (ImportError, ValueError) as e:
         diag.msg_type = "UNKNOWN (无法加载消息类型)"
         diag.status = TopicStatus.ERROR
-        diag.notes.append("ERROR: 无法动态加载消息类型")
+        diag.notes.append(f"ERROR: 无法动态加载消息类型: {e}")
         print_diagnosis(diag, as_json=args.as_json)
         return
 
-    diag.msg_type = _get_type_string(node, topic)
+    diag.msg_type = msg_type_str
 
     # 步骤 3: 采样频率
     sampler = Sampler(node, topic, msg_type, duration=args.duration)

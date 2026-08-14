@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from .models import QoSInfo, TopicDiagnosis
+from .models import QoSInfo, TopicDiagnosis, TopicStatus
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def inspect(node, topic_name: str, diag: TopicDiagnosis) -> TopicDiagnosis:
 
     if not found:
         diag.topic_name = topic_name
-        diag.status_name = "NOT_FOUND"  # 标记，由 rules 处理
+        diag.status = TopicStatus.ERROR
         return diag
 
     # Publisher 信息
