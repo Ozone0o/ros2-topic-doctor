@@ -83,6 +83,6 @@ class TestEvaluate:
     def test_ok_when_normal(self):
         diag = TopicDiagnosis(pub_count=1, sub_count=1, rate=30.0,
                               expected_rate=30.0, last_message_age_ms=10.0,
-                              _stale_timeout_ms=5000.0)
+                              stale_timeout_ms=5000.0)
         result = evaluate(diag)
         assert result.status == TopicStatus.OK
