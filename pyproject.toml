@@ -3,17 +3,33 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ros2-topic-doctor"
-version = "0.1.0"
-description = "Diagnose ROS2 topic status: rate, QoS, freshness in one command."
+name = "roscope"
+version = "0.2.0"
+description = "Modern ROS 2 observability and diagnostic toolkit for communication health."
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "Roscope contributors"}]
+keywords = ["ros2", "robotics", "observability", "diagnostics", "dds"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: System :: Monitoring",
+]
 requires-python = ">=3.10"
-dependencies = [
-    "rclpy",
-    "rosidl_runtime_py",
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
 ]
 
 [project.scripts]
-ros2-topic-doctor = "ros2_topic_doctor.cli:main"
+roscope = "roscope.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -27,3 +43,4 @@ select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]

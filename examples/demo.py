@@ -1,59 +1,64 @@
-"""Demo: 演示 ros2-topic-doctor 的诊断规则判定。
+"""Run Roscope's diagnostic engine against deterministic observations.
 
-不依赖真实 ROS2 环境，直接使用 rules 模块测试各种 topic 状态。
+This demo does not need a ROS 2 installation. It is useful for understanding
+the finding model and for trying the terminal reporter before connecting to a
+robot.
 
-用法:
-    python examples/demo.py
+    PYTHONPATH=src python examples/demo.py
 """
 
 from __future__ import annotations
 
-from ros2_topic_doctor.models import TopicDiagnosis, TopicStatus
-from ros2_topic_doctor.rules import diagnose
-
-
-def status_label(s: TopicStatus) -> str:
-    return {TopicStatus.OK: "OK", TopicStatus.WARN: "WARN", TopicStatus.ERROR: "ERROR"}[s]
+from roscope.core.engine import DiagnosticEngine
+from roscope.core.models import EndpointInfo, QoSInfo, TopicDiagnosis
+from roscope.reporters.terminal import format_diagnosis_text
 
 
 def main() -> None:
-    print("ros2-topic-doctor 诊断规则演示")
-    print("=" * 50)
-
-    test_cases = [
-        {
-            "desc": "健康 topic",
-            "diag": TopicDiagnosis(topic_name="/joint_states", pub_count=1, sub_count=2,
-                                   rate=50.0, expected_rate=50.0, last_message_age_ms=10.0),
-        },
-        {
-            "desc": "Topic 不存在",
-            "diag": TopicDiagnosis(topic_name="/fake/topic", pub_count=0, sub_count=0),
-        },
-        {
-            "desc": "频率过低",
-            "diag": TopicDiagnosis(topic_name="/scan", pub_count=1, sub_count=1,
-                                   rate=5.0, expected_rate=30.0),
-        },
-        {
-            "desc": "消息过期",
-            "diag": TopicDiagnosis(topic_name="/scan", pub_count=1, sub_count=1,
-                                   rate=10.0, last_message_age_ms=10000.0),
-        },
-        {
-            "desc": "无订阅者",
-            "diag": TopicDiagnosis(topic_name="/camera/image_raw", pub_count=1, sub_count=0,
-                                   rate=30.0),
-        },
+    publisher = EndpointInfo(
+        node_name="camera_driver",
+        node_namespace="/robot",
+        topic_type="sensor_msgs/msg/Image",
+        qos=QoSInfo(reliability="BEST_EFFORT", durability="VOLATILE"),
+    )
+    observations = [
+        TopicDiagnosis(
+            topic_name="/camera/image_raw",
+            msg_type="sensor_msgs/msg/Image",
+            topic_exists=True,
+            pub_count=1,
+            sub_count=2,
+            publishers=[publisher],
+            rate=0.0,
+            message_count=0,
+            sample_duration_sec=3.0,
+        ),
+        TopicDiagnosis(
+            topic_name="/joint_states",
+            msg_type="sensor_msgs/msg/JointState",
+            topic_exists=True,
+            pub_count=1,
+            sub_count=1,
+            publishers=[
+                EndpointInfo(
+                    node_name="robot_state_publisher",
+                    topic_type="sensor_msgs/msg/JointState",
+                )
+            ],
+            rate=49.5,
+            expected_rate=50.0,
+            message_count=148,
+            sample_duration_sec=3.0,
+            last_message_seen=True,
+            last_message_age_ms=12.0,
+        ),
     ]
 
-    for tc in test_cases:
-        result = diagnose(tc["diag"], stale_timeout_ms=5000.0, expected_rate=tc["diag"].expected_rate or 30.0)
-        notes = "; ".join(result.notes) if result.notes else "-"
-        print(f"\n  {tc['desc']}")
-        print(f"    状态: {status_label(result.status)}")
-        print(f"    频率: {result.rate or 0:.1f} Hz")
-        print(f"    备注: {notes}")
+    engine = DiagnosticEngine()
+    for diagnosis in observations:
+        engine.analyze(diagnosis, expected_rate=diagnosis.expected_rate, stale_timeout_ms=5000)
+        print(format_diagnosis_text(diagnosis, color=False))
+        print()
 
 
 if __name__ == "__main__":
